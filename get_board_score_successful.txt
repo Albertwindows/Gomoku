@@ -1,0 +1,134 @@
+import numpy as np
+def data_to_score(data):
+    #numpy 中的数据使用的是C++中的引用,所以array这个类型的变量在函数中进行计算的时候会直接改参数的值,也就是传入的数会被更改
+    #可以使用.copy()函数来解决这个问题
+    data = data.copy()
+    b_score = 0
+    w_score = 0
+    h,w  = data.shape
+    b_string = [[] for i in range(h)]
+    w_string = [[] for i in range(h)]
+
+
+    for i in range(h):
+        for j in range(w):
+            if data[i,j] == 0:
+                w_string[i]+="0"
+            else:
+                w_string[i]+=["1","2"][data[i,j]%2]
+        w_string[i] = "".join(w_string[i])
+        w_string[i] = "3" + w_string[i] + "3"
+        b_string[i] = w_string[i]
+        b_string[i] = b_string[i].replace("1","t")
+        b_string[i] = b_string[i].replace("2","1")
+        b_string[i] = b_string[i].replace("t","2")
+    three = "3"*(w+2)
+    w_string.insert(0,three)
+    w_string.append(three)
+    b_string.insert(0,three)
+    b_string.append(three)
+
+
+    print("w_string = {}".format(w_string))
+    print("b_string = {}".format(b_string))
+
+    for k in (0,1):
+        b_score += to_score(b_string)
+        w_score += to_score(w_string)
+        w_string = transpose(w_string)
+        b_string = transpose(b_string)
+
+    b_xie = []
+    w_xie = []
+    for k in (0,1):
+
+        for i in range(2*w+3):
+            b_str = ""
+            w_str = ""
+            if i <= w+1:
+                for j in range(i+1):
+                    w_str += w_string[i-j][j]
+                    b_str += b_string[i-j][j]
+    
+                    # w_score += to_score(t_str)
+    
+                    # b_score += to_score(t_str)
+            else:
+                for j in range(i-w-1,w+2):
+                    w_str += w_string[i-j][j]
+                    b_str += b_string[i-j][j]
+                    # w_score += to_score(t_str)t_str += w_string[j][i-j]
+    
+                    # b_score += to_score(t_str)
+            w_xie.append(w_str)
+            b_xie.append(b_str)
+    
+        print("w_xie = {}".format(w_xie))
+        print("b_xie = {}".format(b_xie))
+
+        b_score += to_score(b_xie)
+        w_score +=to_score(w_xie)
+        w_string = transpose(w_string,mark=1)
+        b_string = transpose(b_string,mark=1)
+
+    print("score = {}".format(b_score - w_score))
+
+def transpose(X,mark=0):
+    m, n = len(X), len(X[0])
+    Y = []
+    if mark==0:
+        Y = [[X[i][j] for i in range(m)] for j in range(n)]
+    else:
+        Y = [[X[i][n-j-1] for i in range(m)] for j in range(n)]
+    for i in range(len(Y)):
+        Y[i] = "".join(Y[i])
+    return Y
+
+def to_score(string):
+    score = 0
+    all_str =  [["11111"],
+                ["011110"],
+                ["011112","0101110","0110110"],
+                ["01110","010110"],
+                ["001112","010112","011012","10011","10101","2011102"],
+                ["0110","01010","010010"],
+                ["000112","001012","010012","10001","2010102","2011002"],
+                ["010","012"],
+                ["2112"],
+                ["211112"],
+                ["21112"]]
+    m_score = [1000000,100000,500,200,50,5,3,0,-5,-5,-5]
+    count = [0]*len(all_str)
+    for line in string:
+
+        for i in range(len(all_str)):
+            for m in all_str[i]:
+                if m in line:
+                    count[i] += 1
+
+    if count[2] >= 2:#双冲四
+        score += 10000
+        count[2] = 0
+    if count[2] >= 1 and count[3] >= 1:#冲4活3
+        score += 10000
+        count[2],count[3] = 0,0
+    if count[3] >= 2:#双活三
+        score += 5000
+        count[3] = 0
+    if count[3] >= 1 and count[4] >= 1:
+        score += 1000
+        count[3],count[4] = 0,0
+    if count[5] >= 2:
+        score += 100
+        count[5] = 0
+    if count[5] >=1 and count[6] >= 1:
+        score += 10
+        count[5],count[6] = 0,0
+    score += np.dot(m_score,count)
+    return score
+
+
+# a = "123"
+# print(a)
+a = np.array([[0,0,0,0,0],[0,0,2,1,0],[0,0,1,2,0],[0,2,1,0,0],[0,0,0,0,0]])
+data_to_score(a)
